@@ -1,0 +1,56 @@
+cloud_init:
+  user_name: ubuntu
+
+  run_cmds: []
+  user_run_cmds: []
+
+  apt_proxy: "http://10.230.64.2:3142"
+
+  apt_sources_default:
+    - source: 'ppa:openstack-charmers/test-tools'
+
+  apt_sources_user:
+    - source: 'ppa:juju/stable'
+
+  apt_packages_default:
+    - juju
+    - python-novaclient
+    - python-quantumclient
+    - python-glanceclient
+    - python-swiftclient
+    - python-keystoneclient
+    - python-cinderclient
+    - bzr
+    - juju-deployer
+    - serverstack-dns
+    - python-flake8
+    - git
+    - default-jre-headless
+  apt_packages_user: []
+
+quota:
+  quota_instances: 30
+  quota_cores: 60
+  quota_security_groups: 1000
+  quota_security_group_rules: 1000
+  quota_ram: 65536
+  quota_floating_ip: 10
+  quota_port: 100
+
+net:
+  start_dhcp_ip: "10.5.0.1"
+  end_dhcp_ip: "10.5.20.255"
+  net_shared: False
+  disable_dhcp: True
+  dns_servers: "10.230.64.2"
+  router: "%s_router"
+  net_name: "%s_admin_net"
+  subnet_name: "%s_admin_net_subnet"
+  bastion_name: "%s-bastion"
+  cidr: "10.5.0.0/16"
+  ext_net: "ext_net"
+  enable_snat: True
+
+flavor_name: "m1.small"
+phone_home_url: "http://10.230.64.2:5000/tenant/provisioned/$INSTANCE_ID"
+password_salt: "password.key"

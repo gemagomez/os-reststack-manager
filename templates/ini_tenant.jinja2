@@ -1,0 +1,88 @@
+#!/bin/bash
+
+mkdir -p /home/ubuntu/.juju
+cat > /home/ubuntu/.juju/environments.yaml << EOF
+default: {{ tenant_name }}
+environments:
+  {{tenant_name}}:
+    type: openstack
+    control-bucket: {{dummy|uuid4}}
+    admin-secret: {{16|random_password}}
+    auth-url: http://10.230.19.129:5000/v2.0
+    region: stsstack
+    username: {{tenant_name}}
+    password: {{tenant_pass}}
+    tenant-name: {{tenant_name}}
+    use-default-secgroup: true
+    image-stream: "daily"
+    apt-http-proxy: http://10.230.64.2:3142
+    apt-https-proxy: http://10.230.64.2:3142
+    agent-metadata-url: https://streams.canonical.com/juju/tools
+    image-metadata-url: http://10.230.19.126:80/swift/v1/simplestreams/data/
+EOF
+
+cat > /etc/apt/apt.conf.d/02proxy << EOF
+Acquire::http { Proxy "http://10.230.64.2:3142";};
+Acquire::HTTP::Proxy::private-ppa.launchpad.net "DIRECT";
+EOF
+cat > /home/ubuntu/novarc << EOF
+export OS_AUTH_URL=http://10.230.19.129:5000/v2.0
+export OS_TENANT_NAME={{tenant_name}}
+export OS_USERNAME={{tenant_name}}
+export OS_PASSWORD={{tenant_pass}}
+export OS_REGION_NAME=stsstack
+EOF
+
+mkdir -p /home/ubuntu/.ssh
+cat > /home/ubuntu/.ssh/config << EOF
+Host 10.5.*
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    User ubuntu
+EOF
+
+chown -R ubuntu:ubuntu /home/ubuntu
+
+mkdir -p /etc/serverstack-dns
+cat > /etc/serverstack-dns/dns.conf << EOF
+[DEFAULT]
+# File containing tenant ids whos network events to be monitored (should
+# contain yours)
+include_tenants = /etc/serverstack-dns/tenant_ids
+# File that will contain dns entries
+hosts_file = /etc/serverstack-dns/tenant_hosts
+# domain name associated with tenant network
+domain = openstacklocal
+
+# connection info for stsstack's rabbit server.  these settings
+# should match neutron's
+rabbit_exchange = neutron
+rabbit_topic = notifications.info
+rabbit_password = <password>
+rabbit_user = neutron
+rabbit_vhost = openstack
+rabbit_host = <rabbit_host_ip>
+
+
+# openstack tenant info
+os_username = {{tenant_name}}
+os_password = {{tenant_pass}}
+os_tenant_name = {{tenant_name}}
+os_auth_url = http://10.230.19.129:5000/v2.0
+
+# upstream dns forwarding
+upstream_dns = 10.230.64.2
+add_current_instances = true
+EOF
+
+cat > /etc/serverstack-dns/tenant_ids << EOF
+{{tenant_id}}
+EOF
+
+service serverstack-dns start
+
+LOCALIP=$(ifconfig eth0 | grep 'inet addr:' | tr ':' ' ' | awk '{print $3}')
+sed -i "s/10.230.64.2/$LOCALIP/g" /etc/resolv.conf
+
+source /home/ubuntu/novarc
+neutron subnet-update {{tenant_name}}_admin_net_subnet --dns-nameservers list=true $LOCALIP
