@@ -5,6 +5,7 @@ import os
 import argparse
 import yaml
 
+
 def parse_config(cfg_file):
     with open(cfg_file, 'r') as f:
         return yaml.load(f)
@@ -22,4 +23,3 @@ try:
     print encoded
 except KeyError, e:
     print "Error, please make sure your credentials file has a variable called tenant_secret."
-

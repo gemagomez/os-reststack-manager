@@ -5,6 +5,7 @@ import os
 import argparse
 import yaml
 
+
 def parse_config(cfg_file):
     with open(cfg_file, 'r') as f:
         return yaml.load(f)
@@ -19,8 +20,6 @@ config = parse_config(args.config)
 
 try:
     decoded = jwt.decode(token, config['tenant_secret'], algorithms=['HS256'])
-    print "User: "+ decoded['user']
+    print "User: " + decoded['user']
 except jwt.DecodeError, e:
     print "Error decoding! Invalid token."
-
-

@@ -23,11 +23,12 @@ from neutronclient.common.exceptions import NeutronClientException
 from novaclient import client as nova_client
 from glanceclient import client as glance_client
 
-from quantum_tenant_net import quantum_tenant_net
+from neutron_tenant_net import neutron_tenant_net
 from tenant_password import password_random, tenant_password
 from app import logging
 
 logger = logging.getLogger('setup_tenant')
+
 
 def extract_keys(key):
     if key.startswith("lp:"):
@@ -38,22 +39,25 @@ def extract_keys(key):
     else:
         return [key]
 
+
 def gen_multipart_cloudconfig(config_dict, other_files, tenant_name, tenant_pass, tenant_id):
     msg = MIMEMultipart()
     sm = MIMEText("#cloud-config\n%s" % json.dumps(config_dict), "cloud-config", sys.getdefaultencoding())
-    sm.add_header('Content-Disposition','attachment',filename="cloud-config.txt")
+    sm.add_header('Content-Disposition', 'attachment', filename="cloud-config.txt")
     msg.attach(sm)
     for other_file in other_files:
         extra_config = prepare_extra_config(tenant_name, tenant_pass, tenant_id, other_file['template'])
         sm2 = MIMEText(extra_config, other_file['content_type'], sys.getdefaultencoding())
-        sm2.add_header('Content-Disposition','attachment',filename=other_file['name'])
+        sm2.add_header('Content-Disposition', 'attachment', filename=other_file['name'])
         logger.debug(os.path.curdir)
         msg.attach(sm2)
     return str(msg)
 
+
 def parse_config(cfg_file):
     with open(cfg_file, 'r') as f:
         return yaml.load(f)
+
 
 def prepare_extra_config(tenant_name, tenant_pass, tenant_id, template):
     def uuid4_filter(foo):
@@ -63,12 +67,13 @@ def prepare_extra_config(tenant_name, tenant_pass, tenant_id, template):
     txt = stream.read()
     env = Environment()
     env.filters['random_password'] = password_random
-    env.filters['uuid4']  = uuid4_filter
+    env.filters['uuid4'] = uuid4_filter
     tmpl = env.from_string(txt)
 
     return tmpl.render(tenant_name=tenant_name,
                        tenant_pass=tenant_pass,
                        tenant_id=tenant_id)
+
 
 def gen_user_data(machinec, tenant_keys):
     user_data = {
@@ -77,7 +82,7 @@ def gen_user_data(machinec, tenant_keys):
                 "name": machinec['cloud_init']['user_name'],
                 "lock-passwd": False,
                 "shell": "/bin/bash",
-                "ssh-authorized-keys" : tenant_keys,
+                "ssh-authorized-keys": tenant_keys,
                 "sudo": "ALL=(ALL) NOPASSWD:ALL"
                 }
         ],
@@ -88,7 +93,7 @@ def gen_user_data(machinec, tenant_keys):
         "packages": machinec['cloud_init']['apt_packages_default'] + machinec['cloud_init']['apt_packages_user'],
         "phone_home": {
             "url": machinec['phone_home_url'],
-            "post": [ "instance_id" ]
+            "post": ['instance_id']
         },
         "runcmd": machinec['cloud_init']['run_cmds'] + machinec['cloud_init']['user_run_cmds']
 
@@ -113,7 +118,7 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                                           enabled=True)
 
         logger.info("Creating tenant %s", tenant_name)
-    except keystoneConflictException,e:
+    except keystoneConflictException, e:
         tenant = keystone.projects.find(name=tenant_name)
         logger.warning("Tenant %s already exists", tenant_name)
 
@@ -124,7 +129,7 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                                      default_project=tenant.id)
 
         logger.info("Creating user %s", tenant_name)
-    except keystoneConflictException,e:
+    except keystoneConflictException, e:
         user = keystone.users.find(name=tenant_name)
         logger.warning("User %s already exists", tenant_name)
 
@@ -134,7 +139,7 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                          user=user,
                          project=tenant)
 
-    nova = nova_client.Client(version = 2,
+    nova = nova_client.Client(version=2,
                               username=credsc['os_user'],
                               api_key=credsc['os_password'],
                               project_id=tenant.id,
@@ -143,7 +148,7 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                               tenant_id=credsc['os_tenant_id'])
 
     nova.quotas.update(tenant.id,
-            instances=machinec['quota']['quota_instances'],
+                       instances=machinec['quota']['quota_instances'],
                        cores=machinec['quota']['quota_cores'],
                        security_groups=machinec['quota']['quota_security_groups'],
                        security_group_rules=machinec['quota']['quota_security_group_rules'],
@@ -160,17 +165,18 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                                     'security_group_rule': machinec['quota']['quota_security_group_rules'],
                                     'floatingip': machinec['quota']['quota_floating_ip']
                                     }
-                         })
+                          }
+                         )
 
     router = filter(lambda r: r['name'] == ("%s_router" % tenant_name), neutron.list_routers()['routers'])
-    if len(router)==0:
+    if len(router) == 0:
         logger.info("Creating router")
         neutron_as_tenant = neutron_client.Client(username=tenant_name,
-                                                  password=tenant_password(tenant_name,machinec['password_salt']),
+                                                  password=tenant_password(tenant_name, machinec['password_salt']),
                                                   project_id=tenant.id,
                                                   auth_url=credsc['os_auth_url_v2'],
                                                   tenant_id=tenant.id)
-        neutron_as_tenant.create_router({'router': { 'name': machinec['net']['router'] % tenant_name }})
+        neutron_as_tenant.create_router({'router': {'name': machinec['net']['router'] % tenant_name}})
     else:
         logger.warning("Router already exists")
 
@@ -181,8 +187,8 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
     # Wiring tenant router to the outside world
     neutron.add_gateway_router(router['id'], {'network_id': external_network['id'], 'enable_snat': machinec['net']['enable_snat']})
 
-    #Configure networking
-    admin_net_id = quantum_tenant_net(machinec['net']['net_name'] % tenant_name,
+    # Configure networking
+    admin_net_id = neutron_tenant_net(machinec['net']['net_name'] % tenant_name,
                                       machinec['net']['subnet_name'] % tenant_name,
                                       machinec['net']['cidr'],
                                       tenant_name,
@@ -197,16 +203,16 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                                       credsc['os_auth_url_v2'],
                                       credsc['os_region_name'])
 
-    #Boot new nova instance
-    vm_manager=nova.servers
+    # Boot new nova instance
+    vm_manager = nova.servers
     try:
         image = nova.images.get(image_name_or_id)
-    except novaNotFoundException,e:
+    except novaNotFoundException, e:
         image = sorted(filter(lambda i: re.search(image_name_or_id, i.name or ""), nova.images.list()), reverse=True, key=lambda i: i.created)[0]
 
-    flavor=nova.flavors.find(name=machinec['flavor_name'])
+    flavor = nova.flavors.find(name=machinec['flavor_name'])
 
-    nova_tenant = nova_client.Client(version = 2,
+    nova_tenant = nova_client.Client(version=2,
                                      username=tenant_name,
                                      api_key=tenant_password(tenant_name, machinec['password_salt']),
                                      project_id=tenant.id,
@@ -224,7 +230,7 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
 
         return ip, machine.id
 
-    except novaNotFoundException,e:
+    except novaNotFoundException, e:
         logger.info("Creating new VM")
         # extra_config = prepare_extra_config(tenant_name,tenant_password(tenant_name,machinec['password_salt']), tenant.id, cloudc)
         user_data = gen_user_data(machinec, tenant_keys)
@@ -232,8 +238,9 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
         machine = nova_tenant.servers.create(name=machinec['net']['bastion_name'] % tenant_name,
                                              image=image,
                                              flavor=flavor,
-                                             userdata=gen_multipart_cloudconfig(user_data, cloudc['extra_files'], tenant_name, tenant_password(tenant_name, machinec['password_salt']), tenant.id),
-                                             nics=[{'net-id': admin_net_id }])
+                                             userdata=gen_multipart_cloudconfig(user_data, cloudc['extra_files'],
+                                             tenant_name, tenant_password(tenant_name, machinec['password_salt']), tenant.id),
+                                             nics=[{'net-id': admin_net_id}])
         status = machine.status
         while status == 'BUILD':
             time.sleep(5)
@@ -245,19 +252,18 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
 
         try:
             neutron.create_security_group_rule(
-                    { 'security_group_rule' : { 'security_group_id': sg['id'],
-                                                'direction': 'ingress' } })
+                    {'security_group_rule': {'security_group_id': sg['id'],
+                                             'direction': 'ingress'}})
             logger.info("Security group rule created")
-        except NeutronClientException,e:
+        except NeutronClientException, e:
             logger.warning("Security group rule already exists, skipping")
 
-
-        floating_ips=nova_tenant.floating_ips.list()
-        if len(floating_ips)>0:
-            floating_ip=floating_ips[0]
+        floating_ips = nova_tenant.floating_ips.list()
+        if len(floating_ips) > 0:
+            floating_ip = floating_ips[0]
             logger.warning("Reusing floating ip %s", floating_ip.ip)
         else:
-            #Create and add a new floating ip
+            # Create and add a new floating ip
             floating_ip = nova_tenant.floating_ips.create(pool=machinec['net']['ext_net'])
             logger.info("Created floating ip %s", floating_ip.ip)
 
@@ -267,4 +273,3 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
 
 if __name__ == '__main__':
     pass
-

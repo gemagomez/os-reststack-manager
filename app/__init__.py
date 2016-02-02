@@ -9,11 +9,14 @@ from flask import Flask, render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 from lib.setup_tenant import parse_config
 
+from tenant_manager import mod as manager
+
 app = Flask(__name__)
 app.config.from_object('config')
 
 # DB setup
 db = SQLAlchemy(app)
+
 
 class Tenant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -33,7 +36,7 @@ class Tenant(db.Model):
 
 db.create_all()
 
-#Set up of logger
+# Set up of logger
 logging.basicConfig(level=CONF.DEBUG_LEVEL,
                     format=CONF.DEBUG_FORMAT,
                     datefmt=CONF.DEBUG_DATEFMT,
@@ -60,5 +63,4 @@ if not os.path.isfile(CONF.CLOUD_CONFIG):
 
 credentials = parse_config(CONF.CREDENTIALS)
 
-from tenant_manager import mod as manager
 app.register_blueprint(manager)

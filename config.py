@@ -12,19 +12,19 @@ _basedir = os.path.abspath(os.path.dirname(__file__))
 #  DEBUG   10
 #  NOTSET  0
 DEBUG_LEVEL = 20
-DEBUG_FORMAT='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-DEBUG_DATEFMT='%m-%d %H:%M:%S'
+DEBUG_FORMAT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+DEBUG_DATEFMT = '%m-%d %H:%M:%S'
 
 # Make sure logs directory exists
 # comment out if a different location to logs folder in local project is preferred
-debug_path=os.path.join(_basedir, "logs")
+debug_path = os.path.join(_basedir, "logs")
 try:
     os.makedirs(debug_path)
 except OSError as exception:
     if exception.errno != errno.EEXIST:
         raise
 
-DEBUG_FILENAME=os.path.join(debug_path, "tenant_manager.log")
+DEBUG_FILENAME = os.path.join(debug_path, "tenant_manager.log")
 
 # Database configuration
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(_basedir, 'app.db')
