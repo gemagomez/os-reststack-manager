@@ -5,7 +5,7 @@ import sys
 import os_reststack_manager.config as CONF
 import logging
 
-from flask import Flask, render_template
+from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from lib.setup_tenant import parse_config
 

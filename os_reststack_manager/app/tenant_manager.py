@@ -4,14 +4,9 @@ from __future__ import print_function
 from flask import Blueprint, Flask, jsonify, json, abort, request, g
 from os_reststack_manager.app import credentials, db, Tenant, logging
 
-from keystoneclient.auth.identity import v2
-from keystoneclient import session
-from novaclient import client
-from lib.setup_tenant import tenant_create, extract_keys, parse_config
+from lib.setup_tenant import tenant_create, extract_keys
 from lib.erase_tenant import tenant_delete
 
-import argparse
-import os
 import re
 import jwt
 import config as CONF
@@ -32,10 +27,10 @@ def authenticate():
     try:
         decoded = jwt.decode(request.headers['X-Auth-Token'], credentials['tenant_secret'], algorithms=['HS256'])
         g.user = decoded['user']
-    except KeyError, e:
-        logger.error("Error: key error")
+    except KeyError:
+        logger.error("Error: key error.")
         abort(401)
-    except jwt.DecodeError, e:
+    except jwt.DecodeError:
         logger.error("Error: decode error")
         abort(401)
 
@@ -89,8 +84,3 @@ def tenant_provisioned(machine_id):
     db.session.commit()
 
     return "", 200
-
-
-if __name__ == '__main__':
-    logger.error("Run from run.py")
-    exit(1)

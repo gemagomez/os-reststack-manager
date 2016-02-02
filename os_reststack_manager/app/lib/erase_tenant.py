@@ -1,19 +1,13 @@
 #!/usr/bin/env python
-import argparse
-import os
 
 from neutronclient.v2_0 import client as neutron_client
 from keystoneclient.v3 import client as keystone_client
-from keystoneclient.apiclient.exceptions import Conflict as keystoneConflictException
 from novaclient.exceptions import NotFound as novaNotFoundException
-from novaclient.exceptions import BadRequest as novaBadRequestException
 from neutronclient.common.exceptions import NeutronClientException
 from keystoneclient.apiclient.exceptions import NotFound as keystoneNotFoundException
 
 from novaclient import client as nova_client
-from glanceclient import client as glance_client
 
-from tenant_password import tenant_password
 from setup_tenant import parse_config
 from app import logging
 
@@ -34,7 +28,7 @@ def tenant_delete(tenant_name, credentials):
     try:
         tenant = keystone.projects.find(name=tenant_name)
         logger.info("Tenant found %s " % tenant.id)
-    except keystoneNotFoundException, e:
+    except keystoneNotFoundException:
         logger.error("Tenant Not Found, aborting")
         raise TenantNotFound()
 
@@ -65,11 +59,10 @@ def tenant_delete(tenant_name, credentials):
         nova.servers.delete(vm.id)
 
         # Wait until VM is really gone.
-        status = vm.status
         while True:
             try:
                 nova.servers.get(vm.id)
-            except novaNotFoundException, e:
+            except novaNotFoundException:
                 logger.debug("VM deleted")
                 break
 
@@ -82,7 +75,7 @@ def tenant_delete(tenant_name, credentials):
         for subnet in subnets:
             try:
                 neutron.remove_interface_router(router['id'], {'subnet_id': subnet['id']})
-            except NeutronClientException, e:
+            except NeutronClientException:
                 pass
 
         neutron.delete_router(router['id'])
@@ -102,7 +95,7 @@ def tenant_delete(tenant_name, credentials):
         user = keystone.users.find(name=tenant_name)
         logger.info("Deleting  user: %s" % user.id)
         keystone.users.delete(user.id)
-    except keystoneNotFoundException, e:
+    except keystoneNotFoundException:
         logger.debug("Didn't find user")
         pass
 
