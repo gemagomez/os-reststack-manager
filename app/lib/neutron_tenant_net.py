@@ -2,14 +2,12 @@
 
 from neutronclient.v2_0 import client
 from keystoneclient.v2_0 import client as ks_client
-import optparse
-import os
 import sys
 import logging
 from neutronclient.common.exceptions import NeutronClientException
 from app import logging
 
-logger = logging.getLogger('neutron_tenant_net')
+logger = logging.getLogger('neutron_tenant')
 
 
 def neutron_tenant_net(net_name, subnet_name, cidr, opts_tenant_name,
@@ -69,12 +67,8 @@ def neutron_tenant_net(net_name, subnet_name, cidr, opts_tenant_name,
         }
 
         if (dhcp_ip_start and dhcp_ip_end):
-            subnet_msg['allocation_pools'] = [
-                    {
-                      'start': dhcp_ip_start,
-                      'end': dhcp_ip_end
-                    }
-             ]
+            subnet_msg['allocation_pools'] = [{'start': dhcp_ip_start,
+                                               'end': dhcp_ip_end}]
 
         subnet = neutron.create_subnet(subnet_msg)['subnet']
     else:
@@ -106,7 +100,7 @@ def neutron_tenant_net(net_name, subnet_name, cidr, opts_tenant_name,
                 router = routers['routers'][0]
                 try:
                     neutron.add_interface_router(router['id'], {'subnet_id': subnet['id']})
-                except NeutronClientException, e:
+                except NeutronClientException:
                     logger.warning('Router already connected to subnet %s', subnet['id'])
             else:
                 logger.warning('Router already connected to subnet')

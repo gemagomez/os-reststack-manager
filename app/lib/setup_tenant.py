@@ -1,13 +1,10 @@
 #!/usr/bin/env python
-import jwt
 import sys
 import os
-import argparse
 import urllib2
 import json
 import re
 import time
-import sys
 import yaml
 from uuid import uuid4
 from jinja2 import Environment
@@ -18,10 +15,8 @@ from neutronclient.v2_0 import client as neutron_client
 from keystoneclient.v3 import client as keystone_client
 from keystoneclient.apiclient.exceptions import Conflict as keystoneConflictException
 from novaclient.exceptions import NotFound as novaNotFoundException
-from novaclient.exceptions import BadRequest as novaBadRequestException
 from neutronclient.common.exceptions import NeutronClientException
 from novaclient import client as nova_client
-from glanceclient import client as glance_client
 
 from neutron_tenant_net import neutron_tenant_net
 from tenant_password import password_random, tenant_password
@@ -77,15 +72,12 @@ def prepare_extra_config(tenant_name, tenant_pass, tenant_id, template):
 
 def gen_user_data(machinec, tenant_keys):
     user_data = {
-        "users": [
-            {
-                "name": machinec['cloud_init']['user_name'],
-                "lock-passwd": False,
-                "shell": "/bin/bash",
-                "ssh-authorized-keys": tenant_keys,
-                "sudo": "ALL=(ALL) NOPASSWD:ALL"
-                }
-        ],
+        "users": [{"name": machinec['cloud_init']['user_name'],
+                   "lock-passwd": False,
+                   "shell": "/bin/bash",
+                   "ssh-authorized-keys": tenant_keys,
+                   "sudo": "ALL=(ALL) NOPASSWD:ALL"
+                   }],
         "apt_proxy": machinec['cloud_init']['apt_proxy'],
         "apt_update": True,
         "apt_upgrade": True,
@@ -118,7 +110,7 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                                           enabled=True)
 
         logger.info("Creating tenant %s", tenant_name)
-    except keystoneConflictException, e:
+    except keystoneConflictException:
         tenant = keystone.projects.find(name=tenant_name)
         logger.warning("Tenant %s already exists", tenant_name)
 
@@ -129,7 +121,7 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                                      default_project=tenant.id)
 
         logger.info("Creating user %s", tenant_name)
-    except keystoneConflictException, e:
+    except keystoneConflictException:
         user = keystone.users.find(name=tenant_name)
         logger.warning("User %s already exists", tenant_name)
 
@@ -204,10 +196,9 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
                                       credsc['os_region_name'])
 
     # Boot new nova instance
-    vm_manager = nova.servers
     try:
         image = nova.images.get(image_name_or_id)
-    except novaNotFoundException, e:
+    except novaNotFoundException:
         image = sorted(filter(lambda i: re.search(image_name_or_id, i.name or ""), nova.images.list()), reverse=True, key=lambda i: i.created)[0]
 
     flavor = nova.flavors.find(name=machinec['flavor_name'])
@@ -230,7 +221,7 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
 
         return ip, machine.id
 
-    except novaNotFoundException, e:
+    except novaNotFoundException:
         logger.info("Creating new VM")
         # extra_config = prepare_extra_config(tenant_name,tenant_password(tenant_name,machinec['password_salt']), tenant.id, cloudc)
         user_data = gen_user_data(machinec, tenant_keys)
@@ -251,11 +242,10 @@ def tenant_create(tenant_name, tenant_keys, image_name_or_id, credentials, cloud
         sg = filter(lambda g: g['tenant_id'] == tenant.id and g['name'] == credsc['os_domain'], neutron.list_security_groups()['security_groups'])[0]
 
         try:
-            neutron.create_security_group_rule(
-                    {'security_group_rule': {'security_group_id': sg['id'],
-                                             'direction': 'ingress'}})
+            neutron.create_security_group_rule({'security_group_rule': {'security_group_id': sg['id'],
+                                                'direction': 'ingress'}})
             logger.info("Security group rule created")
-        except NeutronClientException, e:
+        except NeutronClientException:
             logger.warning("Security group rule already exists, skipping")
 
         floating_ips = nova_tenant.floating_ips.list()

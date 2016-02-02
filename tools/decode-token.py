@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 import jwt
-import sys
-import os
 import argparse
 import yaml
 

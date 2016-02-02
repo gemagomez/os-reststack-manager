@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import config as CONF
 import logging
 
-from flask import Flask, render_template
+from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from lib.setup_tenant import parse_config
 
