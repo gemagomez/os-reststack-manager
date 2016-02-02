@@ -29,7 +29,6 @@ pbr==1.8.1
 prettytable==0.7.2
 pycrypto==2.6.1
 pyparsing==2.0.7
-python-neutronclient==4.0.0
 pytz==2015.7
 requests==2.9.1
 requestsexceptions==1.1.2

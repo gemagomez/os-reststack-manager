@@ -9,10 +9,9 @@ from lib.erase_tenant import tenant_delete
 
 import re
 import jwt
-import config as CONF
+import os_reststack_manager.config as CONF
 
 mod = Blueprint('tenant-manager', __name__)
-
 logger = logging.getLogger('tenant_manager')
 
 

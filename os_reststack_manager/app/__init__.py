@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import os_reststack_manager.config as CONF
 import logging
 
@@ -9,11 +8,15 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from lib.setup_tenant import parse_config
 
+
 app = Flask(__name__)
 app.config.from_object('os_reststack_manager.config')
 
 # DB setup
 db = SQLAlchemy(app)
+db.create_all()
+
+credentials = parse_config(CONF.CREDENTIALS)
 
 
 class Tenant(db.Model):
@@ -32,31 +35,38 @@ class Tenant(db.Model):
     def __repr__(self):
         return '<tenant_name: %s, machine_id: %s, ip: %s, status: %s>' % (self.tenant_name, self.machine_id, self.ip, self.status)
 
-db.create_all()
 
-# Set up of logger
-logging.basicConfig(level=CONF.DEBUG_LEVEL,
-                    format=CONF.DEBUG_FORMAT,
-                    datefmt=CONF.DEBUG_DATEFMT,
-                    filename=CONF.DEBUG_FILENAME,
-                    filemode='w')
+def application(environ=None, start_response=None):
 
+    from os_reststack_manager.app.tenant_manager import mod
 
-# Checks for default config files
-if not os.path.isfile(CONF.PASSWORD_KEY):
-    print("File %s does not exist" % CONF.PASSWORD_KEY)
-    exit(1)
+    # Set up of logger
+    logging.basicConfig(level=CONF.DEBUG_LEVEL,
+                        format=CONF.DEBUG_FORMAT,
+                        datefmt=CONF.DEBUG_DATEFMT,
+                        filename=CONF.DEBUG_FILENAME,
+                        filemode='w')
 
-if not os.path.isfile(CONF.CREDENTIALS):
-    print("File %s does not exist" % CONF.CREDENTIALS)
-    exit(1)
+    # Checks for default config files
+    if not os.path.isfile(CONF.PASSWORD_KEY):
+        print("File %s does not exist" % CONF.PASSWORD_KEY)
+        exit(1)
 
-if not os.path.isfile(CONF.MACHINE):
-    print("File %s does not exist" % CONF.MACHINE)
-    exit(1)
+    if not os.path.isfile(CONF.CREDENTIALS):
+        print("File %s does not exist" % CONF.CREDENTIALS)
+        exit(1)
 
-if not os.path.isfile(CONF.CLOUD_CONFIG):
-    print("File %s does not exist" % CONF.CLOUD_CONFIG)
-    exit(1)
+    if not os.path.isfile(CONF.MACHINE):
+        print("File %s does not exist" % CONF.MACHINE)
+        exit(1)
 
-credentials = parse_config(CONF.CREDENTIALS)
+    if not os.path.isfile(CONF.CLOUD_CONFIG):
+        print("File %s does not exist" % CONF.CLOUD_CONFIG)
+        exit(1)
+
+    app.register_blueprint(mod)
+
+    if not environ or not start_response:
+        return app
+    else:
+        return app(environ, start_response)
