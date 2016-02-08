@@ -14,7 +14,6 @@ app.config.from_object('os_reststack_manager.config')
 
 # DB setup
 db = SQLAlchemy(app)
-db.create_all()
 
 credentials = parse_config(CONF.CREDENTIALS)
 
@@ -34,6 +33,9 @@ class Tenant(db.Model):
 
     def __repr__(self):
         return '<tenant_name: %s, machine_id: %s, ip: %s, status: %s>' % (self.tenant_name, self.machine_id, self.ip, self.status)
+
+
+db.create_all()
 
 
 def application(environ=None, start_response=None):
@@ -70,3 +72,8 @@ def application(environ=None, start_response=None):
         return app
     else:
         return app(environ, start_response)
+
+
+def run():
+    app = application()
+    app.run()

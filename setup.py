@@ -23,7 +23,7 @@ setup(
     long_description=read('README.md'),
     entry_points={
         'console_scripts': [
-            'app = os_reststack_manager.app:main',
+            'os-reststack-manager = os_reststack_manager.app:run',
             ]
         }
 )
