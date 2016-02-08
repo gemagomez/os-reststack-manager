@@ -1,4 +1,0 @@
-extra_files:
-  - name: access.sh
-    content_type: x-shellscript
-    template: templates/ini_tenant.jinja2
