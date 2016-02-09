@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 import base64
 import argparse
+import os
+import subprocess
 
 from Crypto import Random
 from Crypto.Protocol.KDF import PBKDF2
 
-# dd if=/dev/random of=password.key bs=64 count=1
-with open('password.key', 'r') as f:
-    password_salt = f.read()
-
+def get_password_salt(path="password.key"):
+   if not os.path.exists(path):
+       subprocess.check_call(["dd", "if=/dev/random", "of=%s" % path, "bs=64", "count=1"])
+   with open(path) as f:
+	return f.read()
 
 def password_random(length):
     random_bytes = Random.new().read(length)
@@ -16,10 +19,7 @@ def password_random(length):
 
 
 def tenant_password(tenant_name, salt_key):
-    # dd if=/dev/random of=password.key bs=64 count=1
-    with open(salt_key, 'r') as f:
-        password_salt = f.read()
-    return base64.b64encode(PBKDF2(tenant_name, password_salt, 18))
+    return base64.b64encode(PBKDF2(tenant_name, get_password_salt(), 18))
 
 
 if __name__ == '__main__':

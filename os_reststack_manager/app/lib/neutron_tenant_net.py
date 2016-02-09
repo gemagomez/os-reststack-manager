@@ -5,7 +5,8 @@ from keystoneclient.v2_0 import client as ks_client
 import sys
 import logging
 from neutronclient.common.exceptions import NeutronClientException
-from app import logging
+
+from os_reststack_manager.app import logging
 
 logger = logging.getLogger('neutron_tenant')
 

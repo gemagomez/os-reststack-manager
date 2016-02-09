@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-from flask import Blueprint, jsonify, abort, request, g
-from app import credentials, db, Tenant, logging
+from flask import Blueprint, Flask, jsonify, json, abort, request, g
+from os_reststack_manager.app import credentials, db, Tenant, logging
 
 from lib.setup_tenant import tenant_create, extract_keys
 from lib.erase_tenant import tenant_delete
 
 import re
 import jwt
-import config as CONF
+import os_reststack_manager.config as CONF
 
 mod = Blueprint('tenant-manager', __name__)
-
 logger = logging.getLogger('tenant_manager')
 
 
@@ -84,8 +83,3 @@ def tenant_provisioned(machine_id):
     db.session.commit()
 
     return "", 200
-
-
-if __name__ == '__main__':
-    logger.error("Run from run.py")
-    exit(1)

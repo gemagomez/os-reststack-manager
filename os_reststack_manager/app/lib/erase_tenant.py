@@ -9,7 +9,7 @@ from keystoneclient.apiclient.exceptions import NotFound as keystoneNotFoundExce
 from novaclient import client as nova_client
 
 from setup_tenant import parse_config
-from app import logging
+from os_reststack_manager.app import logging
 
 logger = logging.getLogger('erase_tenant')
 

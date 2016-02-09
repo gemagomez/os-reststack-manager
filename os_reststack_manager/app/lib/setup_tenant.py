@@ -6,6 +6,7 @@ import json
 import re
 import time
 import yaml
+
 from uuid import uuid4
 from jinja2 import Environment
 from email.mime.multipart import MIMEMultipart
@@ -20,7 +21,7 @@ from novaclient import client as nova_client
 
 from neutron_tenant_net import neutron_tenant_net
 from tenant_password import password_random, tenant_password
-from app import logging
+from os_reststack_manager.app import logging
 
 logger = logging.getLogger('setup_tenant')
 
