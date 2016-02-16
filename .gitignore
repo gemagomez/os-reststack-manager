@@ -4,6 +4,7 @@
 *.swn
 *.key
 *.db
+*.yml
 os_reststack_manager.egg-info/*
 env*
 .tox*
