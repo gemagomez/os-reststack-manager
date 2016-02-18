@@ -15,7 +15,7 @@ funcsigs==0.4
 gunicorn==19.4.5
 iso8601==0.1.11
 itsdangerous==0.24
-jwt==0.3.2
+PyJWT
 keystoneauth1==2.2.0
 monotonic==0.6
 msgpack-python==0.4.7
