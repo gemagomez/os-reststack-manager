@@ -7,11 +7,19 @@ This project has been tested whilst running on Ubuntu Trusty and with OpenStack 
 
 # How to use
 
+## Installing dependencies
+
+    sudo pip install -r requirements.txt
+
 ## Running the service
+
+Source the environment:
+
+    source env/bin/activate
 
 The tenant_manager can be started as follows:
 
-    ./run.py
+    ./run.sh
 
 The basic configuration can be found at config.py.
 
