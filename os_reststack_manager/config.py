@@ -3,6 +3,7 @@ import os
 import errno
 
 _basedir = os.path.abspath(os.path.dirname(__file__))
+_configdir = os.path.join(_basedir,'..')
 
 # Debug levels:
 #  CRITICAL 50
@@ -33,11 +34,11 @@ SQLALCHEMY_TRACK_MODIFICATIONS = True
 DATABASE_CONNECT_OPTIONS = {}
 
 # REST API binding IP and port
-BIND_IP = '0.0.0.0'
-PORT = 5050
+# BIND_IP = '0.0.0.0'
+# PORT = 5050
 
 # User specific configuration for cloud/app
 PASSWORD_KEY = os.path.join(_basedir, 'password.key')
-CREDENTIALS = os.path.join(_basedir, 'config/credentials.yml')
-MACHINE = os.path.join(_basedir, "config/machine.yml")
-CLOUD_CONFIG = os.path.join(_basedir, "config/cloud_config.yml")
+CREDENTIALS = os.path.join(_configdir, 'config/credentials.yml')
+MACHINE = os.path.join(_configdir, "config/machine.yml")
+CLOUD_CONFIG = os.path.join(_configdir, "config/cloud_config.yml")
