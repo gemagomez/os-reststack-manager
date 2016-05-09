@@ -25,7 +25,7 @@ Source the environment:
 
 Any other pip package required can be installed from: requirements.txt
 
-    sudo pip install -r requirements.txt
+    pip install -r requirements.txt
 
 ## Running the service
 
