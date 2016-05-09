@@ -29,6 +29,10 @@ Any other pip package required can be installed from: requirements.txt
 
 ## Running the service
 
+Source the environment:
+
+    source env/bin/activate
+
 The tenant_manager can be started as follows:
 
     ./run.sh
