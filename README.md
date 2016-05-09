@@ -9,13 +9,25 @@ This project has been tested whilst running on Ubuntu Trusty and with OpenStack 
 
 ## Installing dependencies
 
-    sudo pip install -r requirements.txt
+This service uses venvironment to manage the dependencies. This means virtualenv
+needs to be installed:
 
-## Running the service
+    sudo apt-get install virtualenv
+
+Then create a virtual environment to install dependencies:
+
+    cd os-reststack-manager
+    virtualenv env
 
 Source the environment:
 
     source env/bin/activate
+
+Any other pip package required can be installed from: requirements.txt
+
+    sudo pip install -r requirements.txt
+
+## Running the service
 
 The tenant_manager can be started as follows:
 
@@ -106,12 +118,6 @@ The packages this project depends on are:
   python-novaclient
   python-keystoneclient
   python-glanceclient
-```
-
-Any other pip package required can be installed from: requirements.txt
-
-```
-  sudo pip install -r requirements.txt
 ```
 
 ## Database
