@@ -47,7 +47,7 @@ def application(environ=None, start_response=None):
                         format=CONF.DEBUG_FORMAT,
                         datefmt=CONF.DEBUG_DATEFMT,
                         filename=CONF.DEBUG_FILENAME,
-                        filemode='w')
+                        filemode='a')
 
     # Checks for default config files
     if not os.path.isfile(CONF.PASSWORD_KEY):
